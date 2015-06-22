@@ -1,0 +1,16 @@
+{
+  info = {
+    name = "Sketch",
+    madeBy = "Oeed",
+    icon = {{8, 8, 8, 8}, {8, 1, 1, 8}, {8, 8, 8, 8}},
+   
+    description = "Sketch is a CC-based painting program inspired by Photoshop.",
+    version = "0.1",
+    madeOn = "2.2.15",
+  },
+  
+  install = {
+    ["sketch"] = "Mm5hd97E",
+    ["examples/ex1.skch"] = "!http://www.microsoft.com" --! stands for a non pastebin file. I used microsoft.com becasue I can and I dont really have any real examples.. :P
+  },
+}

@@ -1,0 +1,218 @@
+--Uni International Install File Install (or UIFI)--
+--Made for CCJam 2015                  By Zambonie--
+--Version 0                                21.5.15--
+
+local targs = {...}
+
+local flags = {}
+
+local mode = nil
+
+local installF = nil
+
+local installed = false
+
+if #targs < 1 then
+	error("Please enter what program to install, or any other flags (see forum post for more)", 0)
+end
+
+local function drawBox(sx, sy, ex, ey, col)		--Simple Function to draw boxes.
+	for y = sy, ey do
+		paintutils.drawLine(sx, y, ex, y, col)
+	end
+end
+
+local function doUI()
+	local native = term.current()
+	local w, h = term.getSize()
+	term.setBackgroundColor(colors.white)
+	term.clear()
+	drawBox(1, 1, w, 5, colors.gray)
+	term.setTextColor(colors.lightGray)
+	term.setCursorPos(w-4, 2)
+	write("Uifi")
+
+	local icon = installF.info.icon
+	paintutils.drawImage(icon, 2, 2)
+
+	term.setBackgroundColor(colors.gray)
+	term.setTextColor(colors.white)
+	term.setCursorPos(7, 2)
+	write(installF.info.name)
+	term.setTextColor(colors.lightGray)
+	write(" "..installF.info.version)
+	term.setCursorPos(7, 3)
+	write(installF.info.madeBy)
+
+	term.setTextColor(colors.white)
+	term.setCursorPos(w-7, 4)
+	if installed then
+		term.setCursorPos(w-10, 4)
+		write(" Installed")
+	else
+		write("Install")
+	end
+
+	term.setCursorPos(2, 7)
+	term.setTextColor(colors.gray)
+	term.setBackgroundColor(colors.white)
+	write("Description")
+	if installF.info.description ~= nil or installF.info.description ~= "" then
+		local wind = window.create(term.current(), 2, 9, w-1, h-1, true)
+		term.redirect(wind)
+		term.setBackgroundColor(colors.white)
+		term.clear()
+		term.setTextColor(colors.lightGray)
+		print(installF.info.description)
+	else
+		local wind = window.create(term.current(), 2, 9, w-2, h-6, true)
+		term.redirect(wind)
+		term.setBackgroundColor(colors.white)
+		term.clear()
+		term.setTextColor(colors.lightGray)
+		print("No Description Found.")
+	end
+
+	term.redirect(native)
+	term.setCursorPos(w-1, h-1)
+	term.setTextColor(colors.red)
+	write("*")
+
+	while true do
+		local e, b, x, y = os.pullEvent("mouse_click")
+		if y == 4 and x >= w-8 and not installed then
+			term.redirect(native)
+			term.setTextColor(colors.lightGray)
+			term.setCursorPos(w-10, 4)
+			term.setBackgroundColor(colors.gray)
+			write("Installing")
+			return true
+		end
+
+		if y == h-1 and x == w-1 then
+			term.redirect(native)
+			term.setBackgroundColor(colors.black)
+			term.clear()
+			term.setCursorPos(1,1)
+			return false
+		end
+	end
+end
+
+
+local function install(installFile)					   --Installs.
+
+	installF = textutils.unserialize(installFile)
+
+	while true do
+		local result = doUI()
+		if result == true then
+
+			local file = textutils.unserialize(installFile)    --Extract everything to var's for easier use.
+			local icon = file.info.icon
+			local name = file.info.name
+			local madeBy = file.info.madeBy
+			local desc = file.info.description
+			local ver = file.info.version
+			local created = file.info.madeOn
+
+			local inst = file.install
+
+
+
+			for k, v in pairs(inst) do 
+				if v:sub(1,1) ~= "!" then
+					local f = fs.open(k, "w")
+					local prg = http.get("http://www.pastebin.com/raw.php?i="..v).readAll()
+					f.write(prg)
+					f.close()
+				elseif v:sub(1,1) == "!" then
+					local f = fs.open(k, "w")
+					local prg = http.get(v:sub(2, #v)).readAll()
+					f.write(prg)
+					f.close()
+				end
+			end
+
+			installed = true
+
+			term.setTextColor(colors.white)
+			term.setBackgroundColor(colors.gray)
+			local w, h = term.getSize()
+			term.setCursorPos(w-10, 4)
+			write(" Installed")
+
+		elseif result == false then
+			break
+		end
+	end
+end
+
+--if targs[1] ~= "compress" then
+	if fs.exists(targs[1]) then                                                          --Handles the rest of the targs/runs program
+		print("Installing Local File.")
+		install(fs.open(targs[1], "r").readAll())
+	elseif #targs[1] == 8 and not fs.exists(targs[1]) then
+		if targs[1]:sub(1, 4) ~= "http" then
+			print("Fetching Pastebin File...")
+			install(http.get("http://www.pastebin.com/raw.php?i="..targs[1]).readAll())
+		elseif targs[1]:sub(1, 4) == "http" then
+			print("Fetching File From Entered URL...")
+			install(http.get(targs[1]).readAll())
+		end
+	end
+
+--[[else
+	local cF = {info = {}, inst = {}}
+	print("Welcome to the compression console.")
+	print("To begin, type the name of your project.")
+	cF.info.name = read()
+	print("Now type the maker[s] of "..cF.info.name..".")
+	cF.info.madeBy = read()
+	print("When was this project made?")
+	cF.info.madeOn = read()
+	print("What is the current version?")
+	cF.info.version = read()
+	print("Enter the path of the icon. (4x3 icon, NFP) (Leave blank if none)")
+	local ic = read()
+	if fs.exists(ic) then
+		cF.info.icon = paintutils.loadImage(ic)
+	else
+		cF.info.icon = {{1, 1, 1, 1}, {1, 1, 1, 1}, {1, 1, 1, 1}}
+	end
+	print("Now enter the pastebin codes, followed by the dir, you'd like to be installed on the receiver's computer. Type ! when done.")
+	local instFiles = {}
+	while true do
+		local ic = read()
+		local dr = read()
+		if ic ~= "!" then
+			instFiles[dr] = ic
+		else
+			break
+		end
+	end
+
+	cF.inst = instFiles
+
+	print("Ok then, let me upload the .uif file to pastebin and your done.")
+
+	local key = "0ec2eb25b6166c0c27a394ae118ad829"                                      --Using pastebin's code.
+    local response = http.post(
+        "http://pastebin.com/api/api_post.php", 
+        "api_option=paste&"..
+        "api_dev_key="..key.."&"..
+        "api_paste_format=lua&"..
+        "api_paste_name="..textutils.urlEncode(cF.info.name).."&"..
+        "api_paste_code="..textutils.urlEncode(textutils.serialize(cF))
+    )
+        
+    if response then
+        local sResponse = response.readAll()
+        response.close()
+                
+        local sCode = string.match( sResponse, "[^/]+$" )
+        print( "Done, the code is "..sCode.."." )
+    end
+end--]]
+
+
